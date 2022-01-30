@@ -7,3 +7,6 @@ __pycache__
 dist
 .vim
 .venv
+.vs
+out
+reinstall.ps1

@@ -1,78 +1,74 @@
-# Documentation
+[JoSIM]: https://github.com/JoeyDelp/josim.git
+[pyjosim]: https://github.com/JoeyDelp/pyjosim.git
+[poetry]: https://github.com/sdispater/poetry
 
-JoSIM Tools is a set of tools that does analysis on Superconducting Single Flux Quantum Circuits. JoSIM Tools is built on [JoSIM] and leverages [pyjosim]. The tools currently include verification, margin analysis, yield analysis, and optimization routines.
+# JoSIM Tools
 
-The full documentation can be found on the [JoSIM Tools Github Pages](https://qedalab.github.io/josim-tools/)
+JoSIM Tools is a set of tools that performs analysis on Superconducting Single Flux Quantum Circuits. 
+JoSIM Tools utilizes [JoSIM] subroutines through a [pyjosim] which creates a python bindings for the C++ library. 
+The tools include verification, margin analysis, yield analysis, and optimization routines.
 
-## Motivation
+The full documentation can be found on the [JoSIM Tools Github Pages](https://joeydelp.github.io/josim-tools/)
 
-Existing tools require specialized format, are difficult to use, are not configurable, are slow, or have shortcoming in the method used.
-
-## Goal
+## Project Goal
 
 A tool which does analysis and optimization of SFQ circuits while being:
 
-* Reasonably effecient
+* Reasonably efficient
 * Configurable
 * Programmatically extendable
 
-## Usage Example
+## Requirements
+- Python 3.6+
+- [pyjosim]
+- [poetry]
 
-JoSIM tools takes a single configuration file as input which describes the analysis
-
-```toml
-mode = "margin"
-
-[parameters]
-Btotal = {"nominal" = 1}
-Ltotal = {"nominal" = 1}
-Itotal = {"nominal" = 1}
-
-[verify]
-method = "spec_file"
-circuit = "data/test_splitt_changed_sym.js"
-file = "data/test_splitt_changed_sym.sp"
+## Installation
+```bash
+$ git clone https://github.com/JoeyDelp/josim-tools
+$ cd josim-tools
+$ poetry build --format=wheel
+$ pip install dist/josim_tools-0.1.0-py3-none-any.whl
 ```
 
-The configuration file description is described in the [Configuration File Section](configuration_file.md)
+## Usage
 
-```console
-$ josim-tools margin/simple_margin_analysis.toml
-Btotal: 18.3 [                       #####|#                           ]  7.0
-Ltotal: 29.5 [                    ########|######                      ] 23.9
-Itotal:  7.0 [                           #|#####                       ] 21.1
-Critical margin:  7.0 % ['Btotal+', 'Itotal-']
+JoSIM Tools requires the following 3 files to function:
+1. A circuit file
+2. A specification file generated using [sp_generator.py](https://github.com/JoeyDelp/JoSIM/blob/master/scripts/sp_generator.py)
+3. A configuration file in TOML format
+
+#### Circuit file
+The circuit file needs to be an operational simulation with components of interest abstracted to parameters.
+#### Specification file
+This is a file in a tabular format that identifies the time point and $2\pi$ multiple of phase for each JJ in the circuit file.
+The provided script automatically creates this file when given the simulation result that contains the phase output of each JJ.
+#### Configuration file
+This configuration file in TOML language specifies the type of operation (verify, margin, yield, optimize) that JoSIM tools needs to perform.
+It also contains the path to the circuit file, specification file and the threshold for verification of this circuit operation.
+
+More detail on each of these files can be found [here](https://joeydelp.github.io/josim-tools/)
+
+JoSIM Tools is called through the following command:
+```bash
+$ josim-tools configuration.toml
 ```
 
-#### Alternatives
+#### Alternatives in this space
 
 * [PSCAN2/COWBoy](alternatives.md#pscan2cowboy)
 * [MALT](alternatives.md#malt)
 * [xopt](alternatives.md#xopt)
 * [Cadance AAO](alternatives.md#cadence-aao)
 
-## Installation
+#### License
 
-Install [pyjosim]
+This software is licensed under the BSD-2-Clause license. See [LICENSE.md](https://github.com/JoeyDelp/josim-tools/LICENSE.md) for more details.
 
-Then install [poetry]
+## Changelog
+### v1.1.4 - 31/01/2022
+- Altered to work with the latest release of JoSIM v2.6
+- Updated documentation
 
-```console
-$ pip install poetry
-```
-
-Then simply clone, build and install josim-tools
-```console
-$ git clone https://github.com/pleroux0/josim-tools
-$ cd josim-tools
-$ poetry build --format=wheel
-$ pip install dist/josim_tools-0.1.0-py3-none-any.whl
-```
-
-## License
-
-This software is licensed under the BSD-2-Clause license. See [LICENSE.md](https://github.com/pleroux0/josim-tools/LICENSE.md) for more details.
-
-[JoSIM]: https://github.com/JoeyDelp/JoSIM
-[pyjosim]: https://github.com/pleroux0/pyjosim
-[poetry]: https://github.com/sdispater/poetry
+## Acknowledgements
+- Original author Dr Paul le Roux

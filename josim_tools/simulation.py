@@ -7,7 +7,7 @@ import re
 
 import attr
 
-from pyjosim import Input, AnalysisType, InputType, Matrix, Output, Simulation, ParameterName, Trace, Parameter
+from pyjosim import Input, AnalysisType, Matrix, Output, Simulation, ParameterName, Trace, Parameter
 
 
 class CircuitSimulatorOuput:
@@ -78,13 +78,10 @@ class CircuitSimulator:
         circuit_path: str,
         parameter_names: List[str],
         plot_parameters: Optional[List[PlotParameter]] = None,
-        phase_mode: bool = False,
-        wrspice_compatibility: bool = False
+        phase_mode: bool = False
     ):
         self.circuit_path_ = circuit_path
         self.phase_mode_ = phase_mode
-        self.wrspice_compatibility_ = wrspice_compatibility
-
         self.input_ = self._load_input()
 
         self.parameter_names_ = parameter_names
@@ -94,18 +91,13 @@ class CircuitSimulator:
             self.change_traces(plot_parameters)
 
     def _load_input(self) -> Input:
-        if self.wrspice_compatibility_:
-            input_type = InputType.WrSpice
-        else:
-            input_type = InputType.Jsim
-
         if self.phase_mode_:
             analysis_type = AnalysisType.Phase
         else:
             analysis_type = AnalysisType.Voltage
 
-        input_object = Input(analysis_type, input_type, False)
-        input_object.parse_file(self.circuit_path_)
+        input_object = Input(analysis_type, 0, True, False)
+        input_object.parse_input(self.circuit_path_)
 
         return input_object
 
@@ -125,7 +117,7 @@ class CircuitSimulator:
                 parameter_name = ParameterName(parameter_split[0], parameter_split[1])
             else:
                 assert len(parameter_split) == 1
-                parameter_name = ParameterName(parameter_split[0], "")
+                parameter_name = ParameterName(parameter_split[0], None)
             parameter = Parameter()
             parameter.set_expression(str(value).upper())
             if parameter_name in parameters:

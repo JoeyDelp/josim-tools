@@ -94,7 +94,6 @@ class VerifyConfiguration:
     file_path: str
     circuit_path: str
     threshold: float = 0.05
-    wrspice_compatibility: bool = False
 
     @staticmethod
     def from_dict(value: Dict) -> "VerifyConfiguration":
@@ -106,11 +105,9 @@ class VerifyConfiguration:
         file_path = value["file"]
         circuit_path = value["circuit"]
         threshold = value.get("threshold", 0.05)
-        wrspice_compatiblity = value.get("wrspice_compatibility", False)
 
         return VerifyConfiguration(
-            method, file_path, circuit_path, threshold, wrspice_compatiblity
-        )
+            method, file_path, circuit_path, threshold)
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
