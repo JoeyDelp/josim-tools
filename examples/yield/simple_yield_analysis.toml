@@ -10,5 +10,5 @@ Itotal  = {nominal = 1, variance = 0.1}
 
 [verify]
 method = "spec_file"
-circuit = "data/test_splitt_changed_sym.js"
-file = "data/test_splitt_changed_sym.sp"
+circuit = "data/example_splitter.cir"
+file = "data/example_splitter.sp"

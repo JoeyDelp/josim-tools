@@ -29,20 +29,7 @@ L3_unscaled = {"nominal" = 0.4e-12}
 L4_unscaled = {"nominal" = 1.9e-12}
 L5_unscaled = {"nominal" = 2e-12}
 
-# Parasitic inductors
-LP01_rx2_unscaled = {"nominal" = 0.34e-12}
-LP01_tx1_unscaled = {"nominal" = 0.05e-12}
-LP1_unscaled = {"nominal" = 0.2e-12}
-LP2_unscaled = {"nominal" = 0.2e-12}
-LP_IB1_unscaled = {"nominal" = 0.2e-12}
-LPR01_rx2_unscaled = {"nominal" = 0.2e-12}
-LPR01_tx1_unscaled = {"nominal" = 0.2e-12}
-LRB01rx2_unscaled = {"nominal" = 0.5e-12}
-LRB01tx1_unscaled = {"nominal" = 1e-12}
-LRB1_unscaled = {"nominal" = 1e-12}
-LRB2_unscaled = {"nominal" = 1e-12}
-
 [verify]
 method = "spec_file"
-circuit = "data/test_splitt_changed_sym.js"
-file = "data/test_splitt_changed_sym.sp"
+circuit = "data/example_splitter.cir"
+file = "data/example_splitter.sp"

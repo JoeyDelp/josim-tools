@@ -1,17 +1,23 @@
-# Configuration File Format
+# Configuration File
 
-The configuration is a [TOML file] with a specific table structure. The general
-idea is that a mode, method or type is specified which dictates what should be
-in the current table. Any unused tables or values are considered invalid.
+As stated in the [Introduction](index.md#getting-started), JoSIM Tools is used in the following way:
+
+```bash
+$ josim-tools configuration.toml
+```
+
+The configuration file is in [TOML](https://github.com/toml-lang/toml ) format with a specific table structure. The contents of this configuration file instruct JoSIM Tools which mode to operate in and relevant settings for that mode.
+
+Apart from this configuration file, JoSIM Tools requires fully operational circuit and a verification files for operation. These files are, however, specified inside the configuration file and is discussed in the [verify](#verify) section.
 
 ## Modes
 
-Currently the following modes are supported:
+The configuration file should have exactly one mode line, which tells JoSIM Tools what mode to operate in. At present, only the following modes are supported:
 
  * **[verify](#verify)** - Verify if a circuit works
- * **[yield](#yield)** - Perform a yield analysis on a circuit
  * **[margin](#margin)** - Perform a margin analysis on a circuit
- * **[optimize](#margin)** - Optimizate a circuit
+ * **[yield](#yield)** - Perform a yield analysis on a circuit
+ * **[optimize](#margin)** - Optimize a circuit
 
 Example:
 
@@ -19,83 +25,54 @@ Example:
 mode = "verify"
 ```
 
-### Verify
+## Verify
 
-Does verification if a circuit works.
+This mode simply compares the output of a circuit to the provided verification file and reports if this verification was succesful or not.
 
-Consists of a single [verify table](#verify-table) that specifies how the circuit works
+In order to use the verification mode, a [verify](#verify-table) table needs to be set up inside the configuration file that contains settings relevant to the verification.
 
-#### Verify Table
+### Verify Table
 
-Currently the following method(s) are supported:
-
- * [spec](#specification-file-verification) - Verifies a circuit with a specification file
-
-Currently only validation based on spec files are supported. The same
-validation as done by [Mark Volkman's tools](#). More verification methods are
-intended to be added to [josim-tools](index.md) in the future.
+The first item required in the verification table is a method of verification. At present only one method of verification is supported and that is the *specification file (spec)* method. This method compares the simulation results of the input circuit to that of the specified verification *spec* file.
 
 Example:
 
 ```toml
+mode="verify"
+
 [verify]
 method="spec"
 ```
 
 #### Specification File Verification
 
-The specification file verifier runs a simulation and checks the number of
-times a junction has switched at certain time steps against the specification.
+This method of verification requires two files to be presented:
 
-When this method is specified the following table entries are requires:
+1. A fully operational circuit file where the main design is not within a subcircuit.
+2. A verification file in the SP (specification file) format.
 
- * **file** - A string representing the path to the [specification
-   file](#spec-file-format) which describes how the circuit should operate.
- * **circuit** - A string representing the path to the circuit testbench file.
-
-When this method is specified the following table entries are optional:
-
- * **threshold** - A value specifying how close the phase jumps should be to
-   \(2 \pi\) for it to be considered stable output. When not specified it
-   defaults to \(0.05\) (\(5~\%\) of \(2\pi\)).
-
-##### Spec file format
-
-The specification starts with a line that describes the junctions that are
-being checked. The format requires that the file start with `time` followed all
-the junction names. Junctions can be in subcircuits and are referred to by the
-appropriate trace name as output by JoSIM.
-
-The following line is the calibration line. It is the time followed by the
-initial switch counts.  It allows one to ignore the phase contribution from the
-bias currents and set starting switch counts. The number of switches
-specified must match the number of names specified in the name line.
-
-The next line(s) is a variable number of data lines specifiying the time at
-which switch counts must be valid. It starts with a single time value followed
-by the required switch counts. The number of switches specified must match the
-number of names specified in the name line.
-
-```ANTLR
-time: REAL;
-switches: INTEGER;
-name: STRING;
-
-name_line: 'time' (WHITESPACE+ name)* WHITESPACE* NEWLINE;
-calibration_line: time (WHITESPACE+ switches)* WHITESPACE* NEWLINE;
-data_line: time (WHITESPACE+ switches)* WHITESPACE* NEWLINE;
-
-file: name_line calibration_line data_line+;
-```
-
-Example configuration:
+Example:
 
 ```toml
+mode="verify"
+
 [verify]
 method="spec"
-circuit = "data/test_splitt_changed_sym.js"
-spec_file = "data/test_splitt_changed_sym.sp"
+circuit="path_to_circuit_file.cir"
+spec_file="path_to_spec_file.sp"
 ```
+
+#### SP File Format
+
+An SP file consists of a table layout that contains the time points and integer value of 2\(\pi\) phase shifts that each Josephson Junction (JJ) in the circuit undergoes for the duration of the simulation. 
+
+The column headers should be `time` followed by each JJ label name as declared in the circuit file.
+
+The first row following the header should contain a point in time close to the start of the simulation where no JJ switch has occurred. This point is used as a phase calibration offset which is subtracted from each phase value for each junction in the remaining rows.
+
+The remaining lines each contain the integer number of 2\(\pi\) phase shifts that should be expected at the specified time point.
+
+A script to automate the generation of the specification file can be found [here](https://github.com/JoeyDelp/josim-tools/blob/main/scripts/sp_generator.py).
 
 Example spec file:
 
@@ -113,110 +90,142 @@ Example visualization:
 
 ![Specification File Visualization](images/spec_file_plot.svg)
 
-### Margin
+#### Optional
 
-Does a margin analysis of a circuit.
+There is one setting for verification that is optional. This is the threshold command that sets the threshold above which it considers the phase value to be the next integer number. This in essence acts like specifying the threshold at which a decimal is rounded to the next integer.
 
-Consists of a [verify table](#verify-table), a [margin table](#margin-table),
-and a [margin parameters table](#margin-parameters-table) that specifies how the
-margin analysis should be done.
+ * **threshold** - A value specifying how close the phase jumps should be to 2\(\pi\) for it to be considered stable output. When not specified it defaults to **0.05**.
 
-#### Margin table
+Example:
 
-Specifies how a margin analysis should be done.
+```toml
+threshold=0.35
+```
 
-The following table entries are optional:
+## Margin
 
- * **max_search** - A number specifying the upper boundary of the margin
-   analysis. When not specified it defaults to \(1.9\) (\(1 + 90~\%\)).
- * **min_search** - A number specifying the lower boundary of the margin
-   analysis. When not specified it defaults to \(0.1\) (\(1 - 90~\%\)).
- * **scan_steps** - A positive integer specifying the number of scanning steps
-   the margin analysis should take. When not specified it defaults to \(4\).
- * **binary_search_steps** - A positive integer specifying the number of binary
-   search steps the margin analysis should do. When not specified defaults to
-   \(3\).
+A margin analysis tests the margins for each specified component and reports these margins along with the critical margin(s). The configuration file for a margin analysis requires at least 2 tables since all the settings in the [margin table](#margin-table) are optional. The required two tables are the [verify table](#verify-table) and a [parameter table](#parameter-table).
 
-#### Margin parameters table
+Example:
 
-A table specifying the parameters to do margin analysis on. Each entry in the
-table is a [margin parameter table](#margin-parameter-table) whose key is the
-name of the parameter.
+```toml
+mode="margin"
 
-#### Margin parameter table
+[verify]
+method="spec"
+circuit="path_to_circuit_file.cir"
+spec_file="path_to_spec_file.sp"
+```
 
-A table specifying how a margin parameter should look
+### Margin Table
 
-The following 
+The following settings are all optional and dictate how the margin analysis is to be performed.
 
-### Yield
+ * **max_search** - A number specifying the upper boundary of the margin analysis. When not specified it defaults to **1.9** (1 + 90%).
+ * **min_search** - A number specifying the lower boundary of the margin analysis. When not specified it defaults to **0.1** (1 - 90%).
+ * **scan_steps** - A positive integer specifying the number of scanning steps the margin analysis should take. When not specified it defaults to **4**.
+ * **binary_search_steps** - A positive integer specifying the number of binary search steps the margin analysis should do. When not specified defaults to **3**.
 
-Does a yield analysis of a circuit.
+Example:
 
-Consists of a [verify table](#verify-table), a [yield table](#margin-table),
-and a [yield parameters table](#yield-parameters-table) that specifies how the
-yield analysis should be done.
+```toml
+[margin]
+max_search=1.8
+min_search=0.2
+scan_steps=5
+binary_search_steps=4
+```
 
-#### Yield table
+## Parameter Table
 
-Specifies how a yield analysis should be done.
+The parameter table  is a table used by [margin](#margin), [yield](#yield) and [optimization](#optimization). It consists of a collection of label names that match the labels of components exposed as parameters in the circuit file.
 
-The following table entries are required:
+Parameters in this table (at present) require a **nominal** value but can also have an optional **min** and **max** value.
 
- * **num_samples** - A positive integer that specifies how many samples the
-   yield analysis should do.
+```toml
+[parameters]
+B01={nominal=2.0}
+L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
+L02={nominal=2E-12,min=1.4E-12}
+IB01={nominal=14E-5,max=18E-5}
+```
 
-#### Yield parameters table
+Only the parameters in this table will be used when calculating margins (and as a result optimization and yield).
 
-A table specifying the parameters to do yield analysis on. Each entry in the
-table is a [yield parameter table](#yield-parameter-table) whose key is the
-name of the parameter.
+## Yield
 
-#### Yield parameter table
+Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires [verify](#verify-table), [yield](#yield-table) and [parameters](#parameters-table) tables for successful operation.
 
-### Optimize
+Example:
 
-Optimizes the circuit paramters.
+```toml
+mode="yield"
 
-Consists of a [verify table](#verify-table), a [margin table](#margin-table),
-an [optimize table](#optimize-table) and a [optimize parameters
-table](#optimize-parameters-table) that specifies how the optimization should
-performed.
+[verify]
+method="spec"
+circuit="path_to_circuit_file.cir"
+spec_file="path_to_spec_file.sp"
 
-#### Optimize table
+[parameters]
+B01={nominal=2.0}
+L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
+L02={nominal=2E-12,min=1.4E-12}
+IB01={nominal=14E-5,max=18E-5}
+```
+
+### Yield table
+
+The yield table only has one setting that is required for operation:
+
+ * **num_samples** - A positive integer that specifies how many samples the yield analysis should do.
+
+Example:
+
+```toml
+[yield]
+num_samples=1000
+```
+
+## Optimize
+
+The optimize mode repeatedly runs a [margin analysis](#margin) followed by a [verify](#verify) while adjusting [parameters](#parameters-table) between each run in order to try and improve the critical margin(s) of a circuit. The options for optimization are optional and when not provided use default values. This mode requires only the [verify](#verify-table) and [parameters](#parameters-table) tables but also accepts optionally a [margin](#margin-table) table.
+
+Example:
+
+```toml
+mode="optimize"
+
+[verify]
+method="spec"
+circuit="path_to_circuit_file.cir"
+spec_file="path_to_spec_file.sp"
+
+[parameters]
+B01={nominal=2.0}
+L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
+L02={nominal=2E-12,min=1.4E-12}
+IB01={nominal=14E-5,max=18E-5}
+```
+
+### Optimize table
 
 #### Hybrid optimization
 
-When this method is specified the following table entries are optional:
+The optimization engine only supports hybrid optimization at present and allows the following optional settings to be altered:
 
- * **search_radius** - How large area should be searched surrounding the
-   current best guess for the next guess. If not specified it defaults to
-   \(0.05\) (A \(5~\%\) wide square around the nominal values of the current
-   best point). 
- * **converge** - How close the estimated guess score should be to the analysed
-   guess score for converge. If not specified it defaults to \(0.01\)
-   (\(1~\%\)).
- * **max_iterations** - A positive integer representing the maximum number of
-   guesses the optimization routine will make before terminating due to maximum
-   iteration count. If not specified it defaults to \(1000\).
+ * **search_radius** - Defines the size of the area surrounding the current best point wherein the next best point should be searched for. If not specified it defaults to a **0.05** wide square around the nominal values of the current best point. 
+ * **converge** - Defines how close the estimated guess score should be to the analyzed guess score for converge. If not specified it defaults to **0.01**.
+ * **max_iterations** - A positive integer representing the maximum number of guesses the optimization routine will make before terminating due to maximum
+   iteration count. If not specified it defaults to **1000**.
+ * **output** - The best scored optimization result will be repopulated into the original circuit and stored in this location.
 
-#### Optimize parameters table
+Example:
 
-A table specifying the parameters to do optimization analysis on. Each entry in
-the table is a [optimization parameter table](#optimize-parameter-table) whose
-key is the name of the parameter.
-
-#### Optimize parameter table
-
-When this method is specified the following table entries are optional:
-
- * **search_radius** - How large area should be searched surrounding the
-   current best guess for the next guess. If not specified it defaults to
-   \(0.05\) (A \(5~\%\) wide square around the nominal values of the current
-   best point). 
- * **converge** - How close the estimated guess score should be to the analysed
-   guess score for converge. If not specified it defaults to \(0.01\)
-   (\(1~\%\)).
-
-
-[TOML file]: https://github.com/toml-lang/toml
+```toml
+[optimize]
+method="hybrid"
+search_radius=0.1
+converge=0.2
+max_iterations=500
+output="output.cir"
+```

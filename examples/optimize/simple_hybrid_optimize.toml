@@ -4,8 +4,8 @@ mode = "optimize"
 method = "hybrid"
 search_radius = 0.05
 converge = 0.01
-max_iterations = 500
-output = "output/simple_hybrid_optimize.js"
+max_iterations = 50
+output = "output/simple_hybrid_optimize.cir"
 
 [parameters]
 Btotal = {nominal = 1, min=0.5, max=1.5}
@@ -14,5 +14,5 @@ Itotal = {nominal = 1, min=0.5, max=1.5}
 
 [verify]
 method = "spec_file"
-circuit = "data/test_splitt_changed_sym.js"
-file = "data/test_splitt_changed_sym.sp"
+circuit = "data/example_splitter.cir"
+file = "data/example_splitter.sp"

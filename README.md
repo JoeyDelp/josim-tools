@@ -35,7 +35,7 @@ $ pip install dist/josim_tools-0.1.0-py3-none-any.whl
 
 JoSIM Tools requires the following 3 files to function:
 1. A circuit file
-2. A specification file generated using [sp_generator.py](https://github.com/JoeyDelp/JoSIM/blob/master/scripts/sp_generator.py)
+2. A specification file generated using [sp_generator.py](https://github.com/JoeyDelp/josim-tools/blob/master/scripts/sp_generator.py)
 3. A configuration file in TOML format
 
 #### Circuit file
