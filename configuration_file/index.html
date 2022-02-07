@@ -320,7 +320,7 @@
 </code></pre></div>
 <p>Only the parameters in this table will be used when calculating margins (and as a result optimization and yield).</p>
 <h2 id="yield">Yield</h2>
-<p>Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires <a href="#verify-table">verify</a>, <a href="#yield-table">yield</a> and <a href="#parameters-table">parameters</a> tables for successful operation.</p>
+<p>Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires <a href="#verify-table">verify</a>, <a href="#yield-table">yield</a> and <a href="#parameters-table">parameters</a> tables for successful operation. The <strong>parameters</strong> in this case require a <strong>variance</strong> value to allow uncertainty in the yield process.</p>
 <p>Example:</p>
 <div class="highlight"><pre><span></span><code><span class="n">mode</span><span class="o">=</span><span class="s">"yield"</span><span class="w"></span>
 
@@ -330,10 +330,10 @@
 <span class="n">spec_file</span><span class="o">=</span><span class="s">"path_to_spec_file.sp"</span><span class="w"></span>
 
 <span class="k">[parameters]</span><span class="w"></span>
-<span class="n">B01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2.0</span><span class="p">}</span><span class="w"></span>
-<span class="n">L01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2E-12</span><span class="p">,</span><span class="n">min</span><span class="o">=</span><span class="mf">1.8E-12</span><span class="p">,</span><span class="n">max</span><span class="o">=</span><span class="mf">2.2E-12</span><span class="p">}</span><span class="w"></span>
-<span class="n">L02</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2E-12</span><span class="p">,</span><span class="n">min</span><span class="o">=</span><span class="mf">1.4E-12</span><span class="p">}</span><span class="w"></span>
-<span class="n">IB01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">14E-5</span><span class="p">,</span><span class="n">max</span><span class="o">=</span><span class="mf">18E-5</span><span class="p">}</span><span class="w"></span>
+<span class="n">B01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span><span class="n">variance</span><span class="o">=</span><span class="mf">0.1</span><span class="p">}</span><span class="w"></span>
+<span class="n">L01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2E-12</span><span class="p">,</span><span class="n">variance</span><span class="o">=</span><span class="mf">0.</span><span class="p">}</span><span class="w"></span>
+<span class="n">L02</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">2E-12</span><span class="p">,</span><span class="n">variance</span><span class="o">=</span><span class="mf">0.</span><span class="p">}</span><span class="w"></span>
+<span class="n">IB01</span><span class="o">=</span><span class="p">{</span><span class="n">nominal</span><span class="o">=</span><span class="mf">14E-5</span><span class="p">,</span><span class="n">variance</span><span class="o">=</span><span class="mf">0.</span><span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <h3 id="yield-table">Yield table</h3>
 <p>The yield table only has one setting that is required for operation:</p>
