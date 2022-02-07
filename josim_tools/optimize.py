@@ -13,7 +13,7 @@ from .configuration import (
     OptimizeConfiguration,
     OptimizerParameterConfiguration,
 )
-from .analysis import MarginAnalysis, print_margin_analysis_result
+from .analysis import MarginAnalysis, print_margin_analysis_result, find_critical_margins
 
 
 class NumpyVectorArray:
@@ -187,7 +187,10 @@ class Optimizer:
     margin_analysis_: MarginAnalysis
     num_parameters_: int
     num_margin_threads_: int
+    orig_margin_: float = 0.0
+    opt_margin_: float = 0.0
 
+    verbose = False
     verbose_ = False
     debug_ = False
 
@@ -201,6 +204,7 @@ class Optimizer:
         margin_config: MarginAnalysisConfiguration,
         optimize_config: OptimizeConfiguration,
         optimize_parameters: Dict[str, OptimizerParameterConfiguration],
+        verbose
     ):
         self.margin_analysis_ = MarginAnalysis(verify_config, margin_config)
 
@@ -219,6 +223,7 @@ class Optimizer:
 
         self.state_ = OptimizeState(self.num_parameters())
         self.ones_ = np.ones((1, self.num_parameters()))
+        self.verbose = verbose
 
     def num_parameters(self) -> int:
         """ Returns the number of parameters """
@@ -227,7 +232,8 @@ class Optimizer:
     def _analyze_point(self, point: Dict[str, float]) -> None:
         """ Analyze the point and update state """
 
-        print("Analyzing point")
+        if self.verbose:
+            print("Analyzing point")
 
         keys = self.keys_
         data = np.empty((self.num_parameters()), float)
@@ -235,20 +241,31 @@ class Optimizer:
         for index, key in enumerate(keys):
             data[index] = point[key]
 
-        print("  Adding point to list of guesses")
+        if self.verbose:
+            print("  Adding point to list of guesses")
         self.state_.add_guess(data)
 
-        print("  Doing margin analysis of point:")
-        print()
-
+        if self.verbose:
+            print("  Doing margin analysis of point:")
+            print()
+        
         margin_output = self.margin_analysis_.analyse(point, self.num_margin_threads_)
-        print_margin_analysis_result(margin_output)
+        if self.verbose:
+            print_margin_analysis_result(margin_output)
+        else:
+            margin_params, margin = find_critical_margins(margin_output)
+            if (self.orig_margin_ == 0.0):
+                self.orig_margin_ = margin
+                self.opt_margin_ = margin
+            elif margin > self.opt_margin_:
+                self.opt_margin_ = margin
 
         max_search = self.margin_analysis_.max_search
         min_search = self.margin_analysis_.min_search
 
-        print()
-        print("  Adding all margin boundaries to points of failure")
+        if self.verbose:
+            print()
+            print("  Adding all margin boundaries to points of failure")
         for index, key in enumerate(keys):
             initial = data[index]
 
@@ -264,7 +281,8 @@ class Optimizer:
 
             data[index] = initial
 
-        print("  Finished analyzing point")
+        if self.verbose:
+            print("  Finished analyzing point")
 
     def _get_guess_boundaries(
         self, current_best_point: np.ndarray
@@ -318,12 +336,15 @@ class Optimizer:
         return best_point
 
     def _next_guess(self, current_best_point: np.ndarray) -> np.ndarray:
-        print("Determining next guess")
+        if self.verbose:
+            print("Determining next guess")
 
-        print("  Computing guess boundaries")
+        if self.verbose:
+            print("  Computing guess boundaries")
         guess_boundaries = self._get_guess_boundaries(current_best_point)
 
-        print("  Starting differential evolution routine", flush=True)
+        if self.verbose:
+            print("  Starting differential evolution routine", flush=True)
         # result: OptimizeResult = differential_evolution(
         #     self._score, guess_boundaries, workers=-1
         # )
@@ -344,10 +365,11 @@ class Optimizer:
 
         next_guess = result.x
 
-        print("  Next guess found")
-        print("    value = {}".format(next_guess))
-        print("    estimated score = {}".format(float(self._score(next_guess))))
-        print(flush=True)
+        if self.verbose:
+            print("  Next guess found")
+            print("    value = {}".format(next_guess))
+            print("    estimated score = {}".format(float(self._score(next_guess))))
+            print(flush=True)
 
         return next_guess
 
@@ -374,21 +396,32 @@ class Optimizer:
         best_point = self._dict_to_array(x0)
         iteration = 1
 
+        UP = "\x1B[3A"
+        CLR = "\x1B[0K"
+        if not self.verbose:
+            print(f"Progress: {iteration}/{self.max_iterations_}{CLR}\n\n")
         # Iterate
         while iteration < self.max_iterations_:
-            print("Starting iteration {}".format(iteration), flush=True)
+            if self.verbose:
+                print("Starting iteration {}".format(iteration), flush=True)
             iteration += 1
 
             best_point = self._best_point()
             best_score = float(self._score(best_point))
 
-            print("Current best:")
-            print("  point: {}".format(best_point))
-            print("  score: {}".format(best_score), flush=True)
+            if self.verbose:
+                print("Current best:")
+                print("  point: {}".format(best_point))
+                print("  score: {}".format(best_score), flush=True)
+            else:
+                print("{0}Iteration: {1}/{2}{3}\nOriginal Critical Margin: {4:>4.1f}%{3}\nOptimized Critical Margin: {5:>4.1f}%".format(
+                    UP, iteration, self.max_iterations_, CLR, self.orig_margin_ * 100, self.opt_margin_ * 100
+                ))
 
             output_file = self.config.output
             if output_file is not None:
-                print("Writing current best point to file")
+                if self.verbose:
+                    print("Writing current best point to file")
                 self.margin_analysis_.verifier_.simulator_.write_file_with_updated_parameters(
                     output_file + ".current", best_point
                 )
@@ -396,14 +429,17 @@ class Optimizer:
             next_guess = self._next_guess(best_point)
             estimated_score = float(self._score(next_guess))
 
-            print("Verifying next guess", flush=True)
+            if self.verbose:
+                print("Verifying next guess", flush=True)
             next_guess_dict = self._array_to_dict(next_guess)
             valid: bool = self.margin_analysis_.verifier_.verify(next_guess_dict)
 
             if not valid:
-                print("Adding invalid guess to known points of failure")
+                if self.verbose:
+                    print("Adding invalid guess to known points of failure")
                 self.state_.add_point_of_failure(next_guess)
-                print("Skipping analysis of invalid point")
+                if self.verbose:
+                    print("Skipping analysis of invalid point")
                 continue
 
             self._analyze_point(next_guess_dict)
@@ -411,7 +447,8 @@ class Optimizer:
             actual_score = float(self._score(next_guess))
             estimation_error = estimated_score - actual_score
 
-            print("Guess score estimation error: {}".format(estimation_error))
+            if self.verbose:
+                print("Guess score estimation error: {}".format(estimation_error))
 
             if estimation_error < self.converge_:
                 print("Convergence reached")

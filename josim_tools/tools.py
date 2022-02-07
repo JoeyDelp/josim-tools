@@ -1,4 +1,6 @@
 """ JoSIM Tools CLI interface """
+import os
+os.system("")
 
 from typing import Any, Tuple, Dict
 from multiprocessing import cpu_count
@@ -25,19 +27,24 @@ from .configuration import (
     YieldParameterConfiguration,
 )
 
-
 def run() -> None:
     """ Run the tool parsing the commandline arguments """
-    print(f"JoSIM Tools {__version__}")
+    parser = ArgumentParser(
+        description="Circuit tools built on JoSIM", 
+        epilog="For further assistance please refer to https://joeydelp.github.io/josim-tools")
 
-    parser = ArgumentParser(description="Circuit tools built on JoSIM")
-
-    parser.add_argument("configuration", type=str)
+    parser.add_argument("configuration", type=str, help="configuration.toml file")
+    parser.add_argument("-v", "--version", action="version", version=f"JoSIM Tools {__version__}")
+    parser.add_argument("-V","--verbose", action="store_true", default=False, help="enables verbose display of operations")
 
     parser.add_help = True
     parser.allow_abbrev = True
 
     args = parser.parse_args()
+
+    print(f"JoSIM Tools {__version__}")
+    if args.verbose:
+        print("Verbose mode enabled")
 
     configuration = toml_load(args.configuration)
 
@@ -139,6 +146,7 @@ def run() -> None:
             margin_configuration,
             optimize_configuration,
             optimize_parameters,
+            args.verbose
         )
 
         optimization_parameters: Dict[str, float] = {}

@@ -72,7 +72,7 @@ The first row following the header should contain a point in time close to the s
 
 The remaining lines each contain the integer number of 2\(\pi\) phase shifts that should be expected at the specified time point.
 
-A script to automate the generation of the specification file can be found [here](https://github.com/JoeyDelp/josim-tools/blob/main/scripts/sp_generator.py).
+A script to automate the generation of the specification file can be found [here](https://github.com/JoeyDelp/josim-tools/blob/master/scripts/sp_generator.py).
 
 Example spec file:
 
@@ -154,7 +154,7 @@ Only the parameters in this table will be used when calculating margins (and as 
 
 ## Yield
 
-Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires [verify](#verify-table), [yield](#yield-table) and [parameters](#parameters-table) tables for successful operation.
+Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires [verify](#verify-table), [yield](#yield-table) and [parameters](#parameters-table) tables for successful operation. The **parameters** in this case require a **variance** value to allow uncertainty in the yield process.
 
 Example:
 
@@ -167,10 +167,10 @@ circuit="path_to_circuit_file.cir"
 spec_file="path_to_spec_file.sp"
 
 [parameters]
-B01={nominal=2.0}
-L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
-L02={nominal=2E-12,min=1.4E-12}
-IB01={nominal=14E-5,max=18E-5}
+B01={nominal=2.0,variance=0.1}
+L01={nominal=2E-12,variance=0.1}
+L02={nominal=2E-12,variance=0.1}
+IB01={nominal=14E-5,variance=0.1}
 ```
 
 ### Yield table

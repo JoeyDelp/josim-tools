@@ -327,6 +327,31 @@ class MarginAnalysis:
         return out
 
 
+def find_critical_margins(result: Dict[str, Tuple[float, float]]):
+    result = deepcopy(result)
+    critical_margin_value: float = float("inf")
+    critical_margin_parameters: List[str] = []
+
+    def update_critical_margin(value: float, parameter: str) -> None:
+        nonlocal critical_margin_parameters
+        nonlocal critical_margin_value
+
+        if isclose(critical_margin_value, value):
+            critical_margin_parameters.append(parameter)
+        elif critical_margin_value > value:
+            critical_margin_value = value
+            critical_margin_parameters = [parameter]
+
+    for key, item in result.items():
+        tmp = result[key]
+
+        update_critical_margin(abs(1 - tmp[0]), key + "-")
+        update_critical_margin(abs(1 - tmp[1]), key + "+")
+
+    assert len(critical_margin_parameters) > 0
+
+    return critical_margin_parameters, critical_margin_value
+
 def print_margin_analysis_result(
     result: Dict[str, Tuple[float, float]],
     screen_col: Optional[int] = None,
