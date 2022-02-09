@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple, Dict
 from multiprocessing import cpu_count
 
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 from scipy.optimize import differential_evolution, OptimizeResult
 from scipy.spatial.distance import cdist as scipy_cdist
 
@@ -453,6 +454,11 @@ class Optimizer:
             if estimation_error < self.converge_:
                 print("Convergence reached")
                 break
+
+            if self.config.target_margin is not None:
+                if self.opt_margin_ >= self.config.target_margin:
+                    print("Target Margin reached")
+                    break
 
         if iteration >= self.max_iterations_:
             print("Reached maximum number of iterations")

@@ -67,6 +67,7 @@ class OptimizeConfiguration:
     converge: float = 0.01
     max_iterations: float = 1000
 
+    target_margin: Optional[float] = None
     output: Optional[str] = None
 
     @classmethod
@@ -81,9 +82,10 @@ class OptimizeConfiguration:
         converge: float = value.get("converge", 0.01)
         max_iterations: float = value.get("max_iterations", 1000)
 
+        target_margin: Optional[float] = value.get("target_margin", None)
         output: Optional[str] = value.get("output", None)
 
-        return cls(method, search_radius, converge, max_iterations, output)
+        return cls(method, search_radius, converge, max_iterations, target_margin, output)
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
