@@ -368,6 +368,7 @@
 <li><strong>converge</strong> - Defines how close the estimated guess score should be to the analyzed guess score for converge. If not specified it defaults to <strong>0.01</strong>.</li>
 <li><strong>max_iterations</strong> - A positive integer representing the maximum number of guesses the optimization routine will make before terminating due to maximum
    iteration count. If not specified it defaults to <strong>1000</strong>.</li>
+<li><strong>target_margin</strong> - The targeted optimization percentage. E.g. <strong>0.2</strong> to define 20% margin target. Optimizer stops when this percentage is reached.</li>
 <li><strong>output</strong> - The best scored optimization result will be repopulated into the original circuit and stored in this location.</li>
 </ul>
 <p>Example:</p>
@@ -376,6 +377,7 @@
 <span class="n">search_radius</span><span class="o">=</span><span class="mf">0.1</span><span class="w"></span>
 <span class="n">converge</span><span class="o">=</span><span class="mf">0.2</span><span class="w"></span>
 <span class="n">max_iterations</span><span class="o">=</span><span class="mi">500</span><span class="w"></span>
+<span class="n">target_margin</span><span class="o">=</span><span class="mf">0.2</span><span class="w"></span>
 <span class="n">output</span><span class="o">=</span><span class="s">"output.cir"</span><span class="w"></span>
 </code></pre></div>
 </article>
