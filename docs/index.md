@@ -46,14 +46,15 @@ Once requirements are met, JoSIM Tools can be installed:
 $ git clone https://github.com/JoeyDelp/josim-tools.git
 $ cd josim-tools
 $ poetry build --format=wheel
-$ pip install ./dist/josim_tools-1.1.4-py3-none-any.whl
+$ pip uninstall josim-tools # Just in case of older versions
+$ pip install ./dist/josim_tools-1.1.6-py3-none-any.whl
 ```
 
 ### Verify
 
 ```bash
 $ josim-tools -v
-JoSIM Tools 1.1.4
+JoSIM Tools 1.1.6
 ```
 
 ### Usage

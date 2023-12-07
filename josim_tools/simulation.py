@@ -96,7 +96,7 @@ class CircuitSimulator:
         else:
             analysis_type = AnalysisType.Voltage
 
-        input_object = Input(analysis_type, 0, True, False)
+        input_object = Input(analysis_type, 0, True)
         input_object.parse_input(self.circuit_path_)
 
         return input_object

@@ -28,7 +28,8 @@ A tool which does analysis and optimization of SFQ circuits while being:
 $ git clone https://github.com/JoeyDelp/josim-tools
 $ cd josim-tools
 $ poetry build --format=wheel
-$ pip install dist/josim_tools-0.1.0-py3-none-any.whl
+$ pip uninstall josim-tools # Just in case of older versions
+$ pip install ./dist/josim_tools-1.1.6-py3-none-any.whl
 ```
 
 ## Usage
@@ -66,6 +67,11 @@ $ josim-tools configuration.toml
 This software is licensed under the BSD-2-Clause license. See [LICENSE.md](https://github.com/JoeyDelp/josim-tools/LICENSE.md) for more details.
 
 ## Changelog
+
+### V1.1.6 - 12/07/2023
+
+- Added compatibility for JoSIM v2.6.8
+
 ### v1.1.4 - 31/01/2022
 - Altered to work with the latest release of JoSIM v2.6
 - Updated documentation

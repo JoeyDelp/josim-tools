@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "josim_tools"
-version = "1.1.4"
+version = "1.1.6"
 description = "JoSIM margin, yield and optimization tools"
 authors = ["Johannes Delport <jdelport@sun.ac.za>"]
 license = "BSD-2-Clause"
