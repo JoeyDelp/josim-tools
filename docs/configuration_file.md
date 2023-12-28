@@ -1,18 +1,19 @@
 # Configuration File
 
-As stated in the [Introduction](index.md#getting-started), JoSIM Tools is used in the following way:
+The command line format for calling JoSIM Tools includes a required configuration file.
 
 ```bash
 $ josim-tools configuration.toml
 ```
+Reference: [Introduction](index.md#getting-started)
 
-The configuration file is in [TOML](https://github.com/toml-lang/toml ) format with a specific table structure. The contents of this configuration file instruct JoSIM Tools which mode to operate in and relevant settings for that mode.
+The configuration file is in [TOML](https://github.com/toml-lang/toml ) format with a specific table structure. The configuration file instructs JoSIM Tools which mode to execute and the relevant settings for that mode.
 
-Apart from this configuration file, JoSIM Tools requires fully operational circuit and a verification files for operation. These files are, however, specified inside the configuration file and is discussed in the [verify](#verify) section.
+JoSIM Tools also requires a fully operational circuit netlist and a verification file. These files are specified inside the configuration file as discussed in the [verify](#verify) section below.
 
 ## Modes
 
-The configuration file should have exactly one mode line, which tells JoSIM Tools what mode to operate in. At present, only the following modes are supported:
+A mode line is required. The following execution modes are supported:
 
  * **[verify](#verify)** - Verify if a circuit works
  * **[margin](#margin)** - Perform a margin analysis on a circuit
@@ -27,13 +28,13 @@ mode = "verify"
 
 ## Verify
 
-This mode simply compares the output of a circuit to the provided verification file and reports if this verification was succesful or not.
+Verify mode simulates the circuit, compares the output against the provided verification file, and reports whether they match (success) or not (fail).
 
-In order to use the verification mode, a [verify](#verify-table) table needs to be set up inside the configuration file that contains settings relevant to the verification.
+A [verify](#verify-table) table is required.
 
 ### Verify Table
 
-The first item required in the verification table is a method of verification. At present only one method of verification is supported and that is the *specification file (spec)* method. This method compares the simulation results of the input circuit to that of the specified verification *spec* file.
+The first item required in the verification table is a method of verification. At present only the *specification file (spec)* method is supported. This method compares the simulation results of the input circuit to that of the specified verification *spec* file.
 
 Example:
 
@@ -46,9 +47,9 @@ method="spec"
 
 #### Specification File Verification
 
-This method of verification requires two files to be presented:
+Verification using a specification file requires:
 
-1. A fully operational circuit file where the main design is not within a subcircuit.
+1. Netlist (.cir file) with a fully operational circuit. Note that all parameters in the [parameter table](#parameter-table) must be in the main design is not within a subcircuit.
 2. A verification file in the SP (specification file) format.
 
 Example:
@@ -64,13 +65,13 @@ spec_file="path_to_spec_file.sp"
 
 #### SP File Format
 
-An SP file consists of a table layout that contains the time points and integer value of 2\(\pi\) phase shifts that each Josephson Junction (JJ) in the circuit undergoes for the duration of the simulation. 
+An SP file consists of a table that contains time points and the integer number of 2\(\pi\) phase jumps that each specified Josephson junction (JJ) has experienced by that time point. 
 
-The column headers should be `time` followed by each JJ label name as declared in the circuit file.
+The column headers must be `time` followed by each JJ label name as declared in the circuit file. The number of spaces between labels and numbers is arbitrary.
 
-The first row following the header should contain a point in time close to the start of the simulation where no JJ switch has occurred. This point is used as a phase calibration offset which is subtracted from each phase value for each junction in the remaining rows.
+The first row following the header should be a time close to the start of the simulation at which no JJ has switched, and all JJ phases have reached stable values. This time point is used to provide for each JJ a phase offset to be subtracted the phase value measured at subsequent times (rows).
 
-The remaining lines each contain the integer number of 2\(\pi\) phase shifts that should be expected at the specified time point.
+The remaining lines each include a time and the integer number of 2\(\pi\) phase shifts expected for each JJ.
 
 A script to automate the generation of the specification file can be found [here](https://github.com/JoeyDelp/josim-tools/blob/master/scripts/sp_generator.py).
 
@@ -90,11 +91,11 @@ Example visualization:
 
 ![Specification File Visualization](images/spec_file_plot.svg)
 
-#### Optional
+#### Optional Verification Settings
 
-There is one setting for verification that is optional. This is the threshold command that sets the threshold above which it considers the phase value to be the next integer number. This in essence acts like specifying the threshold at which a decimal is rounded to the next integer.
+The optional **threshold** verification setting allows adjustment of the acceptable range within which the measured number of phase jumps is accepted as matching the expected integer number. The phase measured at the first time in the spec file is used to provide an offset or reference value. For example, if the measured phase is 6.51 radians and the offset measured at the first time in the spec file is 0.79 radians, the measured number of phase jumps is (6.51 - 0.79)/2pi = 0.91. If the number of phase jumps expected is 1, the absolute value of the difference is abs(0.91 - 1) = 0.09. This difference is larger than the default **threshold** value (0.05), so the measured output would not be considered to match the expected output. Setting a higher **threshold** value allows for ringing or other effects that can cause larger differences. Note that a better name for this quantity might be tolerance or range.
 
- * **threshold** - A value specifying how close the phase jumps should be to 2\(\pi\) for it to be considered stable output. When not specified it defaults to **0.05**.
+ * **threshold** - Range within which the measured number of phase jumps must be to the expected integer number to be considered a match. Default: **0.05**.
 
 Example:
 
@@ -104,7 +105,7 @@ threshold=0.35
 
 ## Margin
 
-A margin analysis tests the margins for each specified component and reports these margins along with the critical margin(s). The configuration file for a margin analysis requires at least 2 tables since all the settings in the [margin table](#margin-table) are optional. The required two tables are the [verify table](#verify-table) and a [parameter table](#parameter-table).
+A margin analysis tests the margins individually for each specified parameter and reports these margins along with the critical margin. The configuration file for a margin analysis requires at least 2 tables since all the settings in the [margin table](#margin-table) are optional. The required two tables are the [verify table](#verify-table) and a [parameter table](#parameter-table).
 
 Example:
 
@@ -119,12 +120,19 @@ spec_file="path_to_spec_file.sp"
 
 ### Margin Table
 
-The following settings are all optional and dictate how the margin analysis is to be performed.
+All margin analysis settings are optional.
 
- * **max_search** - A number specifying the upper boundary of the margin analysis. When not specified it defaults to **1.9** (1 + 90%).
- * **min_search** - A number specifying the lower boundary of the margin analysis. When not specified it defaults to **0.1** (1 - 90%).
- * **scan_steps** - A positive integer specifying the number of scanning steps the margin analysis should take. When not specified it defaults to **4**.
- * **binary_search_steps** - A positive integer specifying the number of binary search steps the margin analysis should do. When not specified defaults to **3**.
+ Uncertainties in the upper and lower margin search are given by:
+ ```
+ δx_upper = (max_search - 1)/(s*(2**b))
+ δx_lower = (1 - min_search)/(s*(2**b))
+ ```
+ where s = **scan_steps** and b = **binary_search_steps**. With max_search = 1.9, s = 4, and b = 3, 4, 5, or 8; δx = 2.8%, 1.4%, 0.7%, or 0.09%.
+
+ * **max_search** - Multiplier for the nominal value to calculate the upper boundary for the margin search. Default: **1.9** (+90%).
+ * **min_search** - Multiplier for the nominal value to calculate the lower boundary for the margin search. Default: **0.1** (-90%).
+ * **scan_steps** - A positive integer specifying the number of scanning steps the margin analysis takes between the nominal and the max or min value. The scan identifies the rough range within which the margin lies. Default: **4**.
+ * **binary_search_steps** - A positive integer specifying the number of binary search steps the margin analysis takes to more accurately locate the margin after scanning. Default: **3**.
 
 Example:
 
@@ -138,23 +146,34 @@ binary_search_steps=4
 
 ## Parameter Table
 
-The parameter table  is a table used by [margin](#margin), [yield](#yield) and [optimization](#optimization). It consists of a collection of label names that match the labels of components exposed as parameters in the circuit file.
+The parameter table is used by [margin](#margin), [yield](#yield) and [optimization](#optimization) modes. The parameter names must match parameter labels in the circuit file. 
 
-Parameters in this table (at present) require a **nominal** value but can also have an optional **min** and **max** value.
+Note that names of components with non-parameterized values cannot be used. For example, L01 will not work as a parameter if given in the netlist as:
+    L01 23 24 1.60e-12
+However, L01 will work as a parameter for the following netlist:
+    .param L01=1.60e-12
+    L01 23 24 L01
+
+All parameters require a **nominal** value. **Min** or **max** values are optional.
 
 ```toml
 [parameters]
 B01={nominal=2.0}
 L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
 L02={nominal=2E-12,min=1.4E-12}
-IB01={nominal=14E-5,max=18E-5}
+IB01={nominal=140E-6,max=180E-6}
 ```
 
-Only the parameters in this table will be used when calculating margins (and as a result optimization and yield).
+Notes:
+1. Only the parameters in this table will be used when calculating margins, optimization, or yield. Circuit component values not dependent on these parameters are assumed to not vary or affect the margins.
+2. Exponential notation is supported (examples above). 
+3. Not allowed are unit prefixes or '+' signs (examples: 1.2p, 1.2E+2).
 
 ## Yield
 
-Yield analysis calculates the percentage yield of a circuit. This in essence does multiple margin analysis with a certain degree of confidence dependent on the number of samples and reports the successful runs as a percentage. This type of analysis requires [verify](#verify-table), [yield](#yield-table) and [parameters](#parameters-table) tables for successful operation. The **parameters** in this case require a **variance** value to allow uncertainty in the yield process.
+Yield analysis calculates the probable yield of a circuit as a percentage. The degree of confidence dependent on the number of samples. Each sample includes probabilistic variation of circuit parameters, margin analysis, and computation of the probability that the circuit will work. A normal (Gaussian) probability distribution is assumed. 
+
+Yield analysis requires [verify](#verify-table), [yield](#yield-table) and [parameters](#parameters-table) tables. The **nominal** parameter specifies the mean value of the probability distribution. An additional requirement for yield analysis is that each of the **parameters** in the table must have a standard deviation (**sd**) to model the expected variation. 
 
 Example:
 
@@ -167,17 +186,27 @@ circuit="path_to_circuit_file.cir"
 spec_file="path_to_spec_file.sp"
 
 [parameters]
-B01={nominal=2.0,variance=0.1}
-L01={nominal=2E-12,variance=0.1}
-L02={nominal=2E-12,variance=0.1}
-IB01={nominal=14E-5,variance=0.1}
+B_mult={nominal=1.0,sd=0.03}
+I_mult={nominal=1.0,sd=0.01}
+L_mult={nominal=1.0,sd=0.02}
+B01_0={nominal=2.0,sd=0.02}
+B02_0={nominal=0.5,sd=0.04}
+IB01_0={nominal=140E-6,sd=5.0E-6}
+L01_0={nominal=2.57E-12,sd=1.0E-12}
+L02_0={nominal=1.42E-12,sd=1.0E-12}
 ```
+The above example is for component values calculated as:
+.param B01=B01_0*B_mult
+.param B02=B02_0*B_mult
+.param IB01=IB01_0*I_mult
+.param L01=L01_0*L_mult
+.param L02=L02_0*L_mult
 
 ### Yield table
 
-The yield table only has one setting that is required for operation:
+The yield table has one required setting:
 
- * **num_samples** - A positive integer that specifies how many samples the yield analysis should do.
+ * **num_samples** - A positive integer specifying the number of samples. A larger number improves the statistical confidence but takes longer. 
 
 Example:
 
@@ -188,7 +217,7 @@ num_samples=1000
 
 ## Optimize
 
-The optimize mode repeatedly runs a [margin analysis](#margin) followed by a [verify](#verify) while adjusting [parameters](#parameters-table) between each run in order to try and improve the critical margin(s) of a circuit. The options for optimization are optional and when not provided use default values. This mode requires only the [verify](#verify-table) and [parameters](#parameters-table) tables but also accepts optionally a [margin](#margin-table) table.
+Optimization runs consist of multiple iterations. Each iteration includes adjustment of [parameters](#parameters-table), [verify](#verify), [margin analysis](#margin), and comparison of the new and initial critical margins. Optimization requires [verify](#verify-table) and [parameters](#parameters-table) tables. A [margin](#margin-table) table is optional.
 
 Example:
 
@@ -201,23 +230,28 @@ circuit="path_to_circuit_file.cir"
 spec_file="path_to_spec_file.sp"
 
 [parameters]
+B_mult={nominal=1.0,min=1.0,max=1.0}
 B01={nominal=2.0}
 L01={nominal=2E-12,min=1.8E-12,max=2.2E-12}
 L02={nominal=2E-12,min=1.4E-12}
 IB01={nominal=14E-5,max=18E-5}
 ```
 
+Note: Setting nominal, max, and min to the same values (as done above with B_mult) allows the parameter to be included in margin analyses while keeping the value constant during circuit optimization.
+
 ### Optimize table
 
 #### Hybrid optimization
 
-The optimization engine only supports hybrid optimization at present and allows the following optional settings to be altered:
+* **method** - Only **hybrid** optimization is supported at present. Reference: 
+P. le Roux and C. J. Fourie, “Distance-to-failure-maximization optimization algorithm for SFQ logic cells,” IEEE Trans. Appl. Supercond., vol. 30, no. 7, Art. no. 1301405, Oct. 2020, doi: 10.1109/TASC.2020.2994453.
 
- * **search_radius** - Defines the size of the area surrounding the current best point wherein the next best point should be searched for. If not specified it defaults to a **0.05** wide square around the nominal values of the current best point. 
- * **converge** - Defines how close the estimated guess score should be to the analyzed guess score for converge. If not specified it defaults to **0.01**.
- * **max_iterations** - A positive integer representing the maximum number of guesses the optimization routine will make before terminating due to maximum
-   iteration count. If not specified it defaults to **1000**.
- * **output** - The best scored optimization result will be repopulated into the original circuit and stored in this location.
+Optional settings:
+
+ * **search_radius** - Relative distance from the current best value to search for a better value. Default: **0.05**. <!--- Add how to choose. What are consequences for values too large or too small? -->
+ * **converge** - Difference between estimated and analyzed guess scores used to define convergence. A smaller difference is harder to achieve. Default: **0.01**.
+ * **max_iterations** - A positive integer specifying the maximum number of attempts the optimization routine will make before terminating. Default: **500**.
+ * **output** - Update the original circuit netlist with optimized values and save as a file with the specified name. An interim version is saved after each iteration with ‘.current’ appended to the file name. Note that the path to the file must exist. Default: no output file.
 
 Example:
 
@@ -226,6 +260,6 @@ Example:
 method="hybrid"
 search_radius=0.1
 converge=0.2
-max_iterations=500
+max_iterations=200
 output="output.cir"
 ```
