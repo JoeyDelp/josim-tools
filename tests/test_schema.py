@@ -74,9 +74,9 @@ SIMPLE_YIELD_ANALYSIS = {
     "yield": {
         "num_samples": 500,
         "parameters": {
-            "Btotal": {"nominal": 1, "variance": 0.1},
-            "Ltotal": {"nominal": 1, "variance": 0.1},
-            "Itotal": {"nominal": 1, "variance": 0.1},
+            "Btotal": {"nominal": 1, "sd": 0.1},
+            "Ltotal": {"nominal": 1, "sd": 0.1},
+            "Itotal": {"nominal": 1, "sd": 0.1},
         },
     },
     "verify": {"method": "spec_file", "file": "data/test_splitt_changed_sym.sp"},
@@ -89,17 +89,17 @@ SIMPLE_HYBDRID_OPTIMIZE = {
     "optimize": {
         "method": "hybrid",
         "parameters": {
-            "Btotal": {"nominal": 1, "min": 0.5, "max": 1.5},
-            "Ltotal": {"nominal": 1, "min": 0.5, "max": 1.5},
-            "Itotal": {"nominal": 1, "min": 0.5, "max": 1.5},
+            "Btotal": {"nominal": 1.0, "min": 0.5, "max": 1.5},
+            "Ltotal": {"nominal": 1.0, "min": 0.5, "max": 1.5},
+            "Itotal": {"nominal": 1.0, "min": 0.5, "max": 1.5},
         },
-        "hybrid": {"search_radius": 0.05, "converge": 0.01, "max_iterations": 500},
+        "hybrid": {"search_radius": 0.05, "converge": 0.01, "max_iterations": 100},
     },
     "margin": {
         "parameters": {
-            "Btotal": {"nominal": 1},
-            "Ltotal": {"nominal": 1},
-            "Itotal": {"nominal": 1},
+            "Btotal": {"nominal": 1.0},
+            "Ltotal": {"nominal": 1.0},
+            "Itotal": {"nominal": 1.0},
         }
     },
     "verify": {"method": "spec_file", "file": "data/test_splitt_changed_sym.sp"},

@@ -392,9 +392,9 @@ class Optimizer:
 
     def optimize(self, x0: Dict[str, float]) -> None:
 
-        print("Starting value optimization")
         self._analyze_point(x0)
         best_point = self._dict_to_array(x0)
+        best_score = 0.0
         iteration = 1
 
         UP = "\x1B[3A"
@@ -408,14 +408,16 @@ class Optimizer:
             iteration += 1
 
             best_point = self._best_point()
+            last_score = best_score
             best_score = float(self._score(best_point))
+            score_diff = best_score - last_score
 
             if self.verbose:
                 print("Current best:")
                 print("  point: {}".format(best_point))
-                print("  score: {}".format(best_score), flush=True)
+                print("  score: {0} (change: {1})".format(best_score, score_diff), flush=True)
             else:
-                print("{0}Iteration: {1}/{2}{3}\nOriginal Critical Margin: {4:>4.1f}%{3}\nOptimized Critical Margin: {5:>4.1f}%".format(
+                print("{0}Iteration: {1}/{2}{3}\nOriginal Critical Margin: {4:>5.2f}%{3}\nOptimized Critical Margin: {5:>5.2f}%".format(
                     UP, iteration, self.max_iterations_, CLR, self.orig_margin_ * 100, self.opt_margin_ * 100
                 ))
 
@@ -457,17 +459,22 @@ class Optimizer:
 
             if self.config.target_margin is not None:
                 if self.opt_margin_ >= self.config.target_margin:
-                    print("Target Margin reached")
+                    print("Margin target reached")
                     break
 
         if iteration >= self.max_iterations_:
-            print("Reached maximum number of iterations")
+            print("Iterations maximum reached")
 
-        optimized_point = self._best_point()
-        optimized_score = float(self._score(optimized_point))
+        optimized_point = best_point
+        optimized_score = best_score
+        optimized_point_dict = self._array_to_dict(optimized_point)
 
-        print("Optimized:")
-        print("  point: {}".format(optimized_point))
-        print("  score: {}".format(optimized_score))
+        if score_diff > 0:
+            print("Optimized score: {0} (change in last iteration: {1})".format(optimized_score, score_diff))
+        else:
+            print("Optimized score: {0}".format(optimized_score))
+        print("Optimized parameters:")
+        for index, key in enumerate(self.keys_):
+            print("  {0}: {1}".format(key, optimized_point_dict[key]))
 
         return optimized_point

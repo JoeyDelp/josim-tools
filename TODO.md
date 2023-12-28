@@ -1,18 +1,25 @@
-Decide on method to specify distribution:
- * variance
- * standard deviation
- * 3x standard deviation
+Circuit netlist: Allow analysis or optimization of components in a specified subcircuit!
 
-Should distribution have a default value?
+Margins: Option to output plot to a text file.
 
-Specify default values
+Yield: Add default values for **sd**.
 
-Automatically get nominal values when not specified
+Parameters: When not specified, get nominal values from the netlist file. Changes needed in:
+* schema.py > MARGIN_PARAMETER
+* schema.py > OPTIMIZE_PARAMETER
+* schema.py > YIELD_PARAMETER
+* configuration.py > def __init__(self, nominal: float, min_: Optional[float], max_: Optional[float]):
+* configuration.py > def from_dict(value: Dict) -> "OptimizerParameterConfiguration":
+* configuration.py > class MarginParameterConfiguration:
+* configuration.py > class YieldParameterConfiguration:
 
-CLI:
- * Specify num threads
- * Specify working directory
+CLI to allow specification of:
+ * **num threads**, which is currently set automatically in tools.py as:
+     num_threads = min(2 * len(margin_parameters), cpu_count())
+ * **working directory**
 
-Implement adjustable and testable parameters in optimizer
+Optimizer: Add **trend** option to print the iteration number and changed values of the Optimized Critical Margin on separate lines so that the trend is preserved.
 
-Implement non-percentage based parameters in optimizer
+Optimizer: Implement adjustable and testable parameters. (Why?)
+
+Optimizer: Implement non-percentage based parameters. (Why?)

@@ -41,7 +41,7 @@ class OptimizerParameterConfiguration:
 
     @property
     def nominal(self) -> float:
-        """ Returns the parameter maximum """
+        """ Returns the parameter nominal """
         return self.nominal_
 
     @staticmethod
@@ -65,14 +65,14 @@ class OptimizeConfiguration:
 
     search_radius: float = 0.05
     converge: float = 0.01
-    max_iterations: float = 1000
+    max_iterations: float = 500
 
     target_margin: Optional[float] = None
     output: Optional[str] = None
 
     @classmethod
     def from_dict(cls, value: Dict) -> "OptimizeConfiguration":
-        """ Create a optimize configuration """
+        """ Create a configuration for optimize """
 
         schema_validate(value, SCHEMA_OPTIMIZE)
 
@@ -80,7 +80,7 @@ class OptimizeConfiguration:
 
         search_radius: float = value.get("search_radius", 0.05)
         converge: float = value.get("converge", 0.01)
-        max_iterations: float = value.get("max_iterations", 1000)
+        max_iterations: float = value.get("max_iterations", 500)
 
         target_margin: Optional[float] = value.get("target_margin", None)
         output: Optional[str] = value.get("output", None)
@@ -133,7 +133,7 @@ class MarginParameterConfiguration:
 class YieldParameterConfiguration:
     """ Configuration for YieldParameter """
 
-    variance: float
+    sd: float
     nominal: Optional[float] = None
 
     @staticmethod
@@ -143,9 +143,9 @@ class YieldParameterConfiguration:
         schema_validate(instance=value, schema=SCHEMA_YIELD_PARAMETER)
 
         nominal = value.get("nominal")
-        variance = value["variance"]
+        sd = value["sd"]
 
-        return YieldParameterConfiguration(variance, nominal)
+        return YieldParameterConfiguration(sd, nominal)
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)

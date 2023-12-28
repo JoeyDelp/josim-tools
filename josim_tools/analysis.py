@@ -66,11 +66,11 @@ class NormalDistribution:
     """ Normal distribution """
 
     mean_: float
-    variance_: float
+    sd_: float
 
-    def __init__(self, mean: float, variance: float):
+    def __init__(self, mean: float, sd: float):
         self.mean_ = mean
-        self.variance_ = variance
+        self.sd_ = sd
 
     @property
     def mean(self) -> float:
@@ -78,13 +78,13 @@ class NormalDistribution:
         return self.mean_
 
     @property
-    def variance(self) -> float:
-        """ The variance of the distribution """
-        return self.variance_
+    def sd(self) -> float:
+        """ The sd of the distribution """
+        return self.sd_
 
     def sample(self) -> float:
         """ Return a sample from the distribution """
-        return float(normal(self.mean_, self.variance_, 1))
+        return float(normal(self.mean_, self.sd_, 1))
 
 
 class YieldAnalysis(Yield):
@@ -105,7 +105,7 @@ class YieldAnalysis(Yield):
         distributions = {}
 
         for key, value in parameters.items():
-            distributions[key] = NormalDistribution(value.nominal, value.variance)
+            distributions[key] = NormalDistribution(value.nominal, value.sd)
 
         self.distributions_ = distributions
         self.verify_configuration_ = verify_config
@@ -326,6 +326,13 @@ class MarginAnalysis:
 
         return out
 
+    def margin_uncertainty_upper(self):
+        #import pdb; pdb.set_trace()
+        return (self.max_search - 1.0)/(self.scan_steps*(2**self.binary_search_steps))
+
+    def margin_uncertainty_lower(self):
+        return (1.0 - self.min_search)/(self.scan_steps*(2**self.binary_search_steps))
+
 
 def find_critical_margins(result: Dict[str, Tuple[float, float]]):
     result = deepcopy(result)
@@ -354,6 +361,8 @@ def find_critical_margins(result: Dict[str, Tuple[float, float]]):
 
 def print_margin_analysis_result(
     result: Dict[str, Tuple[float, float]],
+    margin_uncertainty_lower: float,
+    margin_uncertainty_upper: float,
     screen_col: Optional[int] = None,
     left_size: float = 0.1,
     right_size: float = 1.9,
@@ -368,7 +377,7 @@ def print_margin_analysis_result(
 
     usable_chars = screen_col - unusabled_chars
 
-    # TODO figure out how to handle to small screen space
+    # TODO figure out how to handle too small screen space
     assert usable_chars > 2
 
     critical_margin_value: float = float("inf")
@@ -420,6 +429,20 @@ def print_margin_analysis_result(
     bar_left: int = int(usable_chars / 2)
     bar_right: int = int(usable_chars / 2)
 
+    # Print header row
+    heading="Param"
+    print(
+            "{heading}: {adjust}{left} [{bar_left}|{bar_right}] {right}".format(
+                heading=heading.ljust(max_key_size),
+                adjust=adjust,
+                left=" - %",
+                bar_left=bar(0.0, bar_left, True),
+                bar_right=bar(0.0, bar_right, False),
+                right=" + %",
+            )
+        )
+    print("=" * screen_col)
+
     for key, item in result.items():
         print(
             "{key}: {adjust}{left:>4.1f} [{bar_left}|{bar_right}] {right:>4.1f}".format(
@@ -432,8 +455,15 @@ def print_margin_analysis_result(
             )
         )
 
+    print("=" * screen_col)
     print(
         "Critical margin: {1:>4.1f} % {0}".format(
             critical_margin_parameters, critical_margin_value * 100
+        )
+    )
+
+    print(
+        "Margin uncertainties: lower = {0:>6.3f}%, upper = {1:>6.3f}%".format(
+            margin_uncertainty_lower * 100, margin_uncertainty_upper * 100
         )
     )

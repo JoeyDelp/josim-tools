@@ -58,6 +58,7 @@ def run() -> None:
     mode = configuration["mode"]
 
     if mode == "verify":
+        print("=== Verify circuit operation ===")
         verify_configuration = VerifyConfiguration.from_dict(configuration["verify"])
 
         verifier = Verifier(verify_configuration)
@@ -71,9 +72,10 @@ def run() -> None:
                 print("  TIME  : {}".format(output.failure_time))
 
             if output.failure_point is not None:
-                print("  POINT : {}".format(output.failure_point))
+                print("  optimized_point : {}".format(output.failure_point))
 
     elif mode == "margin":
+        print("=== Margin analysis ===")
         verify_configuration = VerifyConfiguration.from_dict(configuration["verify"])
         margin_configuration = MarginAnalysisConfiguration.from_dict(
             configuration.get("margin", {})
@@ -97,11 +99,14 @@ def run() -> None:
 
         print_margin_analysis_result(
             result,
+            margin_analysis.margin_uncertainty_lower(),
+            margin_analysis.margin_uncertainty_upper(),
             left_size=margin_configuration.min_search,
             right_size=margin_configuration.max_search,
         )
 
     elif mode == "yield":
+        print("=== Yield analysis ===")
         verify_configuration = VerifyConfiguration.from_dict(configuration["verify"])
         yield_configuration = YieldAnalysisConfiguration.from_dict(
             configuration["yield"]
@@ -126,6 +131,7 @@ def run() -> None:
             )
         )
     elif mode == "optimize":
+        print("=== Optimize circuit ===")
         verify_configuration = VerifyConfiguration.from_dict(configuration["verify"])
 
         margin_configuration = MarginAnalysisConfiguration.from_dict(
@@ -154,14 +160,48 @@ def run() -> None:
         for key, item in optimize_parameters.items():
             optimization_parameters[key] = item.nominal
 
-        point = optimizer.optimize(optimization_parameters)
+        optimized_point = optimizer.optimize(optimization_parameters)
 
         output_file = optimize_configuration.output
         if output_file is not None:
             optimizer.margin_analysis_.verifier_.simulator_.write_file_with_updated_parameters(
-                output_file, point)
+                output_file, optimized_point)
+            
+        # Margin analysis of the optimized circuit
+        print("=== Optimized circuit margin analysis ===")
+        verify_configuration = VerifyConfiguration.from_dict(configuration["verify"])
+        margin_configuration = MarginAnalysisConfiguration.from_dict(
+            configuration.get("margin", {})
+        )
+
+        margin_parameters: Dict[str, MarginParameterConfiguration] = {}
+
+        for key, item in configuration["parameters"].items():
+            margin_parameters[key] = MarginParameterConfiguration.from_dict(item)
+
+        margin_analysis = MarginAnalysis(verify_configuration, margin_configuration)
+
+        num_threads = min(2 * len(margin_parameters), cpu_count())
+
+        margin_analysis_parameters: Dict[str, float] = {}
+
+        keys_ = list(optimize_parameters.keys())
+        for index, key in enumerate(keys_):
+            index = keys_.index(key)
+            margin_analysis_parameters[key] = optimized_point[index]
+
+        result = margin_analysis.analyse(margin_analysis_parameters, num_threads)
+
+        print_margin_analysis_result(
+            result,
+            margin_analysis.margin_uncertainty_lower(),
+            margin_analysis.margin_uncertainty_upper(),
+            left_size=margin_configuration.min_search,
+            right_size=margin_configuration.max_search,
+        )
+
     else:
-        assert False, "INTERNAL ERROR: UNREACHABLE CODE"
+        assert False, "INTERNAL ERROR: UNREACHABLE CODE in tools.py"
 
 
 if __name__ == "__main__":

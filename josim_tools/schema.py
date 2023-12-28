@@ -35,8 +35,8 @@ MARGIN_PARAMETER = {
 
 YIELD_PARAMETER = {
     "type": "object",
-    "properties": {"nominal": {"type": "number"}, "variance": {"type": "number"}},
-    "required": ["nominal", "variance"],
+    "properties": {"nominal": {"type": "number"}, "sd": {"type": "number"}},
+    "required": ["nominal", "sd"],
     "additionalProperties": False,
 }
 
